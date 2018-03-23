@@ -1,35 +1,38 @@
 const express = require('express');
 const router = express.Router();
 const METHODS = require('../module');
-const mySQL = require('mysql');
-
-const mySQLParams = {
-    host: 'localhost',
-    user: 'root',
-    password: 'admin',
-    database: 'url_shortener'
-};
-const connection = mySQL.createConnection(mySQLParams);
-connection.connect(function (err) {
-    if (err) throw err;
-});
+const dbInsert = require('../module/dbInsert');
+const dbSelect = require('../module/dbSelect');
+const connection = require('../common/db');
 
 router.get('/test', (req, res) => {
-    console.log(req.query.url);
-
     const response = req.query;
     const shortUrl = METHODS.generateUID();
     const url = response.url;
 
-    const table = 'urls';
-    const sql = `INSERT INTO ${table} (short_url, url) VALUES ("${shortUrl}", "${url}")`;
+    const sql = dbInsert(shortUrl, url);
 
     connection.query(sql, function (err, result) {
         if (err) throw err;
-        console.log('INSERTED!!!');
     });
 
     res.send('hello');
+});
+
+router.get('/:encoded_url', (req, res) => {
+    let shortUrl = req.url;
+    shortUrl = shortUrl.replace('\/', '');
+    const sql = dbSelect(shortUrl);
+
+    connection.query(sql, function (err, result) {
+        if (err) throw err;
+
+        if (Array.isArray(result) && result.length) {
+            res.redirect(result[0].url);
+        } else {
+            res.redirect('/');
+        }
+    });
 });
 
 router.all('*', (req, res) => res.status(404).send('wrong way'));
