@@ -7,6 +7,10 @@ const CONFIG = {
     },
 
     table: 'urls',
+
+    regexps: {
+        regexpHyperlinkHttp: /https?:\/\/(?:[-\w]+\.)?([-\w]+)\.\w+(?:\.\w+)?\/?.*/ig,
+    },
 };
 
 module.exports = CONFIG;

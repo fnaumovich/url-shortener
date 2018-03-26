@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const METHODS = require('../module');
+const CONFIG = require('../config');
 const dbInsert = require('../module/dbInsert');
 const dbSelect = require('../module/dbSelect');
 const dbSelectAll = require('../module/dbSelectAll');
@@ -8,33 +9,40 @@ const Database = require('../common/db');
 const database = new Database();
 
 router.get('/shorten', async (req, res) => {
-    const url = req.query.url;
-    const sqlUrls = dbSelectAll();
-    
-    if (url.length === 0) {
-        res.send({ success: 0, value: 'Sting is empty' });
-    } 
-    
-    else {
-        try {
-            const result = await database.query(sqlUrls);
-            const filteredResult = result.filter(item => {
-                return item.url === url;
-            });
+    let url = req.query.url;
 
-            if (filteredResult.length) {
-                res.send({ success: 1, value: filteredResult[0].short_url });
-            } 
-            
-            else {
-                const shortUrl = METHODS.generateUID();
-                const sql = dbInsert(shortUrl, url);
-                await database.query(sql);
-                res.send({ success: 1, value: shortUrl });
-            }
-        } catch(err) {
-            throw new Error(err);
+    url = url.startsWith('http') ? url : `http://${url}`;
+
+    if (url.match(CONFIG.regexps.regexpHyperlinkHttp)) {
+        const sqlUrls = dbSelectAll();
+
+        if (url.length === 0) {
+            res.send({ success: 0, value: 'Sting is empty' });
         }
+
+        else {
+            try {
+                const result = await database.query(sqlUrls);
+                const filteredResult = result.filter(item => {
+                    return item.url === url;
+                });
+
+                if (filteredResult.length) {
+                    res.send({ success: 1, value: filteredResult[0].short_url });
+                }
+
+                else {
+                    const shortUrl = METHODS.generateUID();
+                    const sql = dbInsert(shortUrl, url);
+                    await database.query(sql);
+                    res.send({ success: 1, value: shortUrl });
+                }
+            } catch(err) {
+                throw new Error(err);
+            }
+        }
+    } else {
+        res.send({ success: 0, value: 'Введен некорректный адрес' });
     }
 });
 

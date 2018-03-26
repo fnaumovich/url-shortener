@@ -5,15 +5,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const errorMsg = document.querySelector('.js-error');
 
     submitBtn.addEventListener('click', () => {
-        const regexpHyperlinkToHttp = /(?:[-\w]+\.)?([-\w]+)\.\w+(?:\.\w+)?\/?.*/ig;
         const regexpHyperlinkHttp = /https?:\/\/(?:[-\w]+\.)?([-\w]+)\.\w+(?:\.\w+)?\/?.*/ig;
 
         let inputValue = input.value;
         const xhr = new XMLHttpRequest();
 
-        if (inputValue.match(regexpHyperlinkToHttp)) {
-            inputValue = 'http://' + inputValue;
-        }
+        inputValue = inputValue.startsWith('http') ? inputValue : `http://${inputValue}`;
 
         if (inputValue.match(regexpHyperlinkHttp)) {
             errorMsg.classList.remove('show');
