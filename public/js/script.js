@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const errorMsg = document.querySelector('.js-error');
 
     submitBtn.addEventListener('click', () => {
-        const regexpHyperlinkHttp = /https?:\/\/(?:[-\w]+\.)?([-\w]+)\.\w+(?:\.\w+)?\/?.*/ig;
+        const regexpHyperlinkHttp = /https?:\/\/(((?:[-\w]+\.)?([-\w]+)\.\w+)|(localhost))(?:\.\w+)?\/?.*/ig;
 
         let inputValue = input.value;
         const xhr = new XMLHttpRequest();

@@ -9,7 +9,7 @@ const CONFIG = {
     table: 'urls',
 
     regexps: {
-        regexpHyperlinkHttp: /https?:\/\/(?:[-\w]+\.)?([-\w]+)\.\w+(?:\.\w+)?\/?.*/ig,
+        regexpHyperlinkHttp: /https?:\/\/(((?:[-\w]+\.)?([-\w]+)\.\w+)|(localhost))(?:\.\w+)?\/?.*/ig,
     },
 };
 
