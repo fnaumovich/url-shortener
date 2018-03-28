@@ -1,40 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const METHODS = require('../module');
-const CONFIG = require('../config');
-const dbInsert = require('../module/dbInsert');
-const dbSelect = require('../module/dbSelect');
-const dbSelectAll = require('../module/dbSelectAll');
-const Database = require('../common/db');
-const database = new Database();
+const database = require('../common/db');
 
 router.get('/shorten', async (req, res) => {
+    const regexpHyperlinkHttp = /https?:\/\/(((?:[-\w]+\.)?([-\w]+)\.\w+)|(localhost))(?:\.\w+)?\/?.*/ig;
     let url = req.query.url;
 
     url = url.startsWith('http') ? url : `http://${url}`;
 
-    if (url.match(CONFIG.regexps.regexpHyperlinkHttp)) {
-        const sqlUrls = dbSelectAll();
-
+    if (url.match(regexpHyperlinkHttp)) {
         if (url.length === 0) {
             res.send({ success: 0, value: 'Sting is empty' });
         }
 
         else {
             try {
-                const result = await database.query(sqlUrls);
-                const filteredResult = result.filter(item => {
-                    return item.url === url;
-                });
+                const result = await database.findByUrl(url);
 
-                if (filteredResult.length) {
-                    res.send({ success: 1, value: filteredResult[0].short_url });
+                if (result.length) {
+                    res.send({ success: 1, value: result[0].short_url });
                 }
 
                 else {
-                    const shortUrl = METHODS.generateUID();
-                    const sql = dbInsert(shortUrl, url);
-                    await database.query(sql);
+                    const shortUrl = await database.saveShortUrl(url);
                     res.send({ success: 1, value: shortUrl });
                 }
             } catch(err) {
@@ -49,10 +37,9 @@ router.get('/shorten', async (req, res) => {
 router.get('/:encoded_url', async (req, res) => {
     let shortUrl = req.url;
     shortUrl = shortUrl.replace('\/', '');
-    const sql = dbSelect(shortUrl);
 
     try {
-        const result = await database.query(sql);
+        const result = await database.findByShortUrl(shortUrl);
 
         if (Array.isArray(result) && result.length) {
             res.redirect(result[0].url);

@@ -1,16 +1,14 @@
 const CONFIG = {
-    sqlParams: {
-        host: 'localhost',
-        user: 'root',
-        password: 'admin',
-        database: 'url_shortener'
-    },
+    database: {
+        connection: {
+            host: 'localhost',
+            user: 'root',
+            password: 'admin',
+            database: 'url_shortener'
+        },
 
-    table: 'urls',
-
-    regexps: {
-        regexpHyperlinkHttp: /https?:\/\/(((?:[-\w]+\.)?([-\w]+)\.\w+)|(localhost))(?:\.\w+)?\/?.*/ig,
-    },
+        table: 'urls',
+    }
 };
 
 module.exports = CONFIG;
