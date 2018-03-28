@@ -1,53 +1,60 @@
 const express = require('express');
 const router = express.Router();
 const database = require('../common/db');
+const ValidationException = require('../common/error').ValidationException;
+const DbException = require('../common/error').DbException;
 
-router.get('/shorten', async (req, res) => {
+router.get('/shorten', async (req, res, next) => {
     const regexpHyperlinkHttp = /https?:\/\/(((?:[-\w]+\.)?([-\w]+)\.\w+)|(localhost))(?:\.\w+)?\/?.*/ig;
     let url = req.query.url;
 
+    // проверка на пустую строку
+    if (!url || (url && !url.trim().length === 0)) {
+        return next(new ValidationException(['Поле url обязательное для заполнения']));
+    }
+
     url = url.startsWith('http') ? url : `http://${url}`;
 
-    if (url.match(regexpHyperlinkHttp)) {
-        if (url.length === 0) {
-            res.send({ success: 0, value: 'Sting is empty' });
-        }
+    // проверка на http://
+    if (!url.match(regexpHyperlinkHttp)) {
+        return next(new ValidationException(['Введен некорректный адрес']));
+    }
 
+    try {
+        let resultUrl = '';
+        const result = await database.findByUrl(url);
+
+        if (result.length) {
+            resultUrl = result[0].short_url;
+        }
         else {
-            try {
-                const result = await database.findByUrl(url);
-
-                if (result.length) {
-                    res.send({ success: 1, value: result[0].short_url });
-                }
-
-                else {
-                    const shortUrl = await database.saveShortUrl(url);
-                    res.send({ success: 1, value: shortUrl });
-                }
-            } catch(err) {
-                throw new Error(err);
-            }
+            resultUrl = await database.saveShortUrl(url);
         }
-    } else {
-        res.send({ success: 0, value: 'Введен некорректный адрес' });
+        res.send({ success: 1, value: resultUrl });
+    }
+
+    catch(err) {
+        return next(new DbException);
     }
 });
 
-router.get('/:encoded_url', async (req, res) => {
+router.get('/:encoded_url', async (req, res, next) => {
     let shortUrl = req.url;
     shortUrl = shortUrl.replace('\/', '');
 
     try {
+        let resultUrl = '';
         const result = await database.findByShortUrl(shortUrl);
 
         if (Array.isArray(result) && result.length) {
-            res.redirect(result[0].url);
+            resultUrl = result[0].url;
         } else {
-            res.redirect('/');
+            resultUrl = '/';
         }
+
+        res.redirect(resultUrl);
     } catch (err) {
-        throw new Error(err);
+        return next(new DbException);
     }
 });
 

@@ -8,7 +8,9 @@ const CONFIG = {
         },
 
         table: 'urls',
-    }
+    },
+
+    basePath: '/public',
 };
 
 module.exports = CONFIG;
